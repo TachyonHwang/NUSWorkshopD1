@@ -6,7 +6,7 @@ backend clears its data.
 
 ## Repository Layout
 
-This repository uses a branch per layer. `main` is an aggregator with three Git
+This repository uses a branch per layer. `main` is an aggregator with four Git
 submodules pointing to branches of **this same repository**, not separate repos.
 Each pointer pins an exact commit; its configured branch is used by `--remote`.
 
@@ -15,9 +15,10 @@ Each pointer pins an exact commit; its configured branch is used by `--remote`.
 | `backend/` | `backend` | Single-file Bun server, zero npm dependencies |
 | `frontend/` | `frontend` | Angular 19 app, signals, HttpClient, design system |
 | `cli/` | `cli` | Zero-dependency CommonJS Node CLI and shell wrappers |
+| `bundle/` | `bundle` | Generated release output; never hand-edit |
 
 The layer branches have independent orphan histories. They do not contain the
-aggregator's submodules, so recursive checkout stops at these three layers.
+aggregator's submodules, so recursive checkout stops at these four layers.
 `.gitmodules` records their shared URL and tracking branches. Do not merge the
 layer branches into `main`; update their submodule pointers instead.
 
@@ -138,3 +139,38 @@ git submodule update --init --recursive
 
 Commit or stash local submodule edits before switching revisions. Use
 `git submodule status` to inspect the currently checked-out layer commits.
+
+## Generated Release Bundle
+
+From the main checkout, with Git, Node/npm, and a configured Git author identity:
+
+```sh
+node scripts/build-bundle.mjs
+node scripts/build-bundle.mjs --push
+```
+
+The zero-dependency script updates backend/frontend/cli to their configured
+branch tips, runs `npm install` and `ng build`, and requires
+`frontend/dist/snip-frontend/browser/index.html`. It copies the backend and CLI
+unchanged into `bundle/`, adds the frontend under `bundle/public/`, and generates
+the package, Dockerfile, Docker ignore rules, Railway config, and a nonsecret
+`.env` containing `PUBLIC_DIR=./public`. The image deliberately includes `.env`
+so Bun enables static serving. The package has no `type` field: Bun runs the
+server while plain Node can still run the CommonJS CLI.
+
+The bundle branch is generated output: do not hand-edit it. The script refuses
+dirty submodules or pre-staged main changes and only stages submodule pointers
+in main. It commits generated changes inside bundle first, then commits pointer
+bumps in main. Deterministic output and staged-diff checks make an unchanged run
+report `nothing to commit` rather than fail. `--push` publishes `HEAD:bundle`
+before `HEAD:main`, including local commits from earlier runs; without it, nothing
+is pushed. Detached CI checkouts are supported. Diverged bundle histories fail
+rather than being force-pushed. npm install must leave source files unchanged;
+resolve any dependency-lock update in the frontend branch before retrying.
+
+To run a built bundle, change into `bundle` and run `bun server.js`; open
+`http://localhost:3000`. Its CLI is `node cli.js ls`. The current frontend source
+still calls `http://localhost:3000`; a remote UI deployment requires an API-origin
+change in the frontend branch and a rebuild. No source-layer code is rewritten
+by bundling. To deploy only the generated branch, clone with `--branch bundle`
+and build its Dockerfile, or point Railway at that branch.
