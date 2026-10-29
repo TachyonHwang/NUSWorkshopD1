@@ -1,5 +1,5 @@
 <main>
-  <header class="masthead">
+  <header class="masthead hero">
     <h1>Snip<span aria-hidden="true">.</span></h1>
     <span class="masthead-label">URL SHORTENER</span>
   </header>
@@ -7,8 +7,8 @@
   <section class="create-section" aria-labelledby="create-heading">
     <h2 id="create-heading">A shorter link.</h2>
     <form (submit)="shorten($event)" novalidate>
-      <label for="url">Original URL</label>
-      <div class="form-row">
+      <label for="url" class="sr-only">Original URL</label>
+      <div class="form-row composer">
         <input
           #urlInput
           id="url"
@@ -42,7 +42,7 @@
     </div>
   </section>
 
-  <section class="links-section" aria-labelledby="links-heading" [attr.aria-busy]="loading()">
+  <section class="links-section links-card" aria-labelledby="links-heading" [attr.aria-busy]="loading()">
     <div class="section-heading">
       <h2 id="links-heading">Your links <span class="count">{{ links().length }}</span></h2>
       <button class="secondary" type="button" (click)="refresh()" [disabled]="loading() || saving()">
