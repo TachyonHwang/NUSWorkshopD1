@@ -1,0 +1,74 @@
+<main>
+  <header class="masthead">
+    <h1>Snip<span aria-hidden="true">.</span></h1>
+    <span class="masthead-label">URL SHORTENER</span>
+  </header>
+
+  <section class="create-section" aria-labelledby="create-heading">
+    <h2 id="create-heading">A shorter link.</h2>
+    <form (submit)="shorten($event)" novalidate>
+      <label for="url">Original URL</label>
+      <div class="form-row">
+        <input
+          #urlInput
+          id="url"
+          name="url"
+          type="url"
+          inputmode="url"
+          autocomplete="url"
+          placeholder="https://example.com/your-long-link"
+          [value]="url()"
+          (input)="url.set(urlInput.value)"
+          [disabled]="saving()"
+          [attr.aria-invalid]="formError() ? 'true' : null"
+          [attr.aria-describedby]="formError() ? 'form-error' : null"
+          required
+        >
+        <button class="primary" type="submit" [disabled]="saving() || loading()">
+          {{ saving() ? 'Shortening...' : 'Shorten URL' }}
+        </button>
+      </div>
+      @if (formError()) {
+        <p id="form-error" class="error" role="alert">{{ formError() }}</p>
+      }
+    </form>
+    <div aria-live="polite">
+      @if (created(); as link) {
+        <div class="success">
+          <span>Link created</span>
+          <a [href]="link.shortUrl" target="_blank" rel="noopener noreferrer">{{ link.shortUrl }}</a>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="links-section" aria-labelledby="links-heading" [attr.aria-busy]="loading()">
+    <div class="section-heading">
+      <h2 id="links-heading">Your links <span class="count">{{ links().length }}</span></h2>
+      <button class="secondary" type="button" (click)="refresh()" [disabled]="loading() || saving()">
+        {{ loading() ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+    @if (listError()) {
+      <p class="error" role="alert">{{ listError() }}</p>
+    }
+    <table>
+      <caption class="sr-only">Shortened links and hit counts</caption>
+      <colgroup><col class="code-column"><col><col class="hits-column"></colgroup>
+      <thead>
+        <tr><th scope="col">Short code</th><th scope="col">Original URL</th><th scope="col" class="hits">Hits</th></tr>
+      </thead>
+      <tbody>
+        @for (link of links(); track link.code) {
+          <tr>
+            <td><a class="short-code" [href]="link.shortUrl" target="_blank" rel="noopener noreferrer">{{ link.code }}</a></td>
+            <td class="original-url">{{ link.url }}</td>
+            <td class="hits">{{ link.hits }}</td>
+          </tr>
+        } @empty {
+          <tr><td class="empty" colspan="3">{{ loading() ? 'Loading links...' : listError() ? 'Links unavailable.' : 'No links yet.' }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</main>

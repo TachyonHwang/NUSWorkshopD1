@@ -1,0 +1,14 @@
+:root {
+  --ink: #25332d;
+  --muted: #6b756f;
+  --accent: #18764f;
+  --danger: #b13631;
+  --line: #dce2dd;
+  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  color: var(--ink);
+  background: #fafcfb;
+  letter-spacing: 0;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
